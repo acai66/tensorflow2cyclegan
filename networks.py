@@ -1,5 +1,5 @@
 import numpy as np
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, LeakyReLU, Activation, ZeroPadding2D, BatchNormalization, Add, LeakyReLU, UpSampling2D
+from tensorflow.keras.layers import Conv2D, Activation, ZeroPadding2D, BatchNormalization, Add, LeakyReLU, UpSampling2D
 from tensorflow.keras import Input, Model
 from instancenormalization import InstanceNormalization
 
