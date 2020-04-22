@@ -1,12 +1,14 @@
 import numpy as np
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, LeakyReLU, Activation, ZeroPadding2D, BatchNormalization, Add
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, LeakyReLU, Activation, ZeroPadding2D, BatchNormalization, Add, LeakyReLU, UpSampling2D
 from tensorflow.keras import Input, Model
 from instancenormalization import InstanceNormalization
+
+
 #Define residual block with 2 convolutional layers and a skip connection
 def resnet_block(x):    
     x2 = Conv2D(filters=256, kernel_size=3, strides=1, padding="same")(x)
     x2 = InstanceNormalization(axis=1)(x2)
-    x2 = Activation('relu')(x2)
+    x2 = LeakyReLU()(x2)
 
     x2 = Conv2D(filters=256, kernel_size=3, strides=1, padding="same")(x2)
     x2 = InstanceNormalization(axis=1)(x2)
@@ -23,29 +25,30 @@ def define_generator_network(num_resnet_blocks=9):
     #Down-sampling using conv2d
     x = Conv2D(filters=64, kernel_size=7, strides=1, padding="same")(input_layer)
     x = InstanceNormalization(axis=1)(x)
-    x = Activation("relu")(x)
+    x = LeakyReLU(x)
 
     x = Conv2D(filters=128, kernel_size=3, strides=2, padding="same")(x)
     x = InstanceNormalization(axis=1)(x)
-    x = Activation("relu")(x)
+    x = LeakyReLU(x)
 
     x = Conv2D(filters=256, kernel_size=3, strides=2, padding="same")(x)
     x = InstanceNormalization(axis=1)(x)
-    x = Activation("relu")(x)
+    x = LeakyReLU(x)
 
     #Transforming the hidden representation using the resnet blocks
     for i in range(num_resnet_blocks):
         x = resnet_block(x)
     
     #Upsampling to recover the transformed image
-    #Conv2DTranspose with a stride 2 works like Conv2D with stride 1/2
-    x = Conv2DTranspose(filters=128, kernel_size=3, strides=2, padding='same', use_bias=False)(x)
+    x = UpSampling2D(size=(2, 2))(x)
+    x = Conv2D(filters=128, kernel_size=3, strides=1, padding='same')(x)
     x = InstanceNormalization(axis=1)(x)
-    x = Activation("relu")(x)
+    x = LeakyReLU(x)
 
-    x = Conv2DTranspose(filters=64, kernel_size=3, strides=2, padding='same', use_bias=False)(x)
+    x = UpSampling2D(size=(2, 2))(x)
+    x = Conv2D(filters=64, kernel_size=3, strides=1, padding='same')(x)
     x = InstanceNormalization(axis=1)(x)
-    x = Activation("relu")(x)
+    x = LeakyReLU(x)
 
     x = Conv2D(filters=3, kernel_size=7, strides=1, padding="same")(x)
     output = Activation('tanh')(x) #tanh activation to get normalised output image
