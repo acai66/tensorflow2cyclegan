@@ -68,5 +68,5 @@ python test.py --data_dir 数据集路径
 
 
 ### Credits
-- [Monkeone](https://github.com/Monkeone/tensorflow2cyclegan).
+- [Monkeone](https://github.com/Monkeone/tensorflow2cyclegan) for main framework.
 
