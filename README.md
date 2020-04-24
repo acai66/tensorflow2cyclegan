@@ -3,16 +3,20 @@
 `tensorflow2`实现`CycleGAN`，移植修改自[源码](https://github.com/Monkeone/tensorflow2cyclegan)
 
 ## 效果演示(只训练30000次)
-- 风景画转梵高画风格：
-    输入风景画：
-    ![1](results/realB_0.png)![2](results/realB_1.png)![3](results/realB_2.png)
-    转换后：
-    ![1](results/fakeA_0.png)![2](results/fakeA_1.png)![3](results/fakeA_2.png)
+- 风景画转梵高画风格:
+  输入风景画:
+  
+  ![1](results/realB_0.png)![2](results/realB_1.png)![3](results/realB_2.png)
+  转换后:
+  
+  ![1](results/fakeA_0.png)![2](results/fakeA_1.png)![3](results/fakeA_2.png)
 - 梵高画转风景画风格：
-    输入梵高画：
-    ![1](results/realA_0.png)![2](results/realA_1.png)![3](results/realA_2.png)
-    转换后：
-    ![1](results/fakeB_0.png)![2](results/fakeB_1.png)![3](results/fakeB_2.png)
+  输入梵高画:
+  
+  ![1](results/realA_0.png)![2](results/realA_1.png)![3](results/realA_2.png)
+  转换后:
+  
+  ![1](results/fakeB_0.png)![2](results/fakeB_1.png)![3](results/fakeB_2.png)
 更多次数的训练效果应该还会更好一些。
 
 ### 移植细节
@@ -45,7 +49,7 @@ python train.py --data_dir 数据集路径
 ```
 tensorboard --logdir logs/ --bind_all
 ```
-    浏览器打开`http://127.0.0.1:6006`
+浏览器打开`http://127.0.0.1:6006`
     
 - 如需在训练时查看生成图片信息，在训练时指定`--tensorboard_images_freq`参数，参数为更新频率
     
