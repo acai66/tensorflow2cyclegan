@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_cyc', type=float, default=10, help='lambda value for cycle consistency loss')
     parser.add_argument('--lambda_idt', type=float, default=5, help='lambda value for identity loss')
     parser.add_argument('--print_steps_freq', type=int, default=20, help='The frequency of printing loss and acc')
-    parser.add_argument('--tensorboard_images_freq', type=int, default=50, help='The frequency of Tensorboard images updating')
+    parser.add_argument('--tensorboard_images_freq', type=int, default=0, help='The frequency of Tensorboard images updating, 0 means do not write images to logs')
     parser.add_argument('--save_steps_freq', type=int, default=10000, help='The frequency at which model should be saved and evaluated')
     parser.add_argument('--num_resnet_blocks', type=int, default=3, help='Number of ResNet blocks for transformation in generator')
     parser.add_argument('--data_dir', type=str, default='data/vangogh2photo', help='Directory where train and test images are present')
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     lambda_cyc = opt.lambda_cyc #10
     lambda_idt = opt.lambda_idt #5
     print_steps_freq = opt.print_steps_freq # 20
-    tensorboard_images_freq = opt.tensorboard_images_freq # 50
+    tensorboard_images_freq = opt.tensorboard_images_freq # 0
     save_steps_freq = opt.save_steps_freq #10000
     num_resnet_blocks = opt.num_resnet_blocks #5
     lr = opt.lr
@@ -135,29 +135,30 @@ if __name__ == '__main__':
                 tf.summary.scalar("identityA_Loss", g_loss[5], step=step)
                 tf.summary.scalar("identityB_Loss", g_loss[6], step=step)
                 tf.summary.scalar("Total Loss", g_loss[0], step=step)
-            
-            if step % tensorboard_images_freq == 0:
-                # Generate images
-                test_input_A = tf.image.resize(next(testA), size=(cfg['height'], cfg['width']))
-                test_input_B = tf.image.resize(next(testB), size=(cfg['height'], cfg['width']))
-                fakeB = genA2B(test_input_A)
-                fakeA = genB2A(test_input_B)
-
-                # Get reconstructed images
-                reconsA = genB2A(fakeB)
-                reconsB = genA2B(fakeA)
-
-                identityA = genB2A(test_input_A)
-                identityB = genA2B(test_input_B)
                 
-                tf.summary.image('fakeB', fakeB, max_outputs=8, step=step)
-                tf.summary.image('fakeA', fakeA, max_outputs=8, step=step)
-                tf.summary.image('reconsA', reconsA, max_outputs=8, step=step)
-                tf.summary.image('reconsB', reconsB, max_outputs=8, step=step)
-                tf.summary.image('identityA', identityA, max_outputs=8, step=step)
-                tf.summary.image('identityB', identityB, max_outputs=8, step=step)
-                tf.summary.image('test_input_A', test_input_A, max_outputs=8, step=step)
-                tf.summary.image('test_input_B', test_input_B, max_outputs=8, step=step)
+            if tensorboard_images_freq:
+                if step % tensorboard_images_freq == 0:
+                    # Generate images
+                    test_input_A = tf.image.resize(next(testA), size=(cfg['height'], cfg['width']))
+                    test_input_B = tf.image.resize(next(testB), size=(cfg['height'], cfg['width']))
+                    fakeB = genA2B(test_input_A)
+                    fakeA = genB2A(test_input_B)
+
+                    # Get reconstructed images
+                    reconsA = genB2A(fakeB)
+                    reconsB = genA2B(fakeA)
+
+                    identityA = genB2A(test_input_A)
+                    identityB = genA2B(test_input_B)
+
+                    tf.summary.image('fakeB', fakeB, max_outputs=8, step=step)
+                    tf.summary.image('fakeA', fakeA, max_outputs=8, step=step)
+                    tf.summary.image('reconsA', reconsA, max_outputs=8, step=step)
+                    tf.summary.image('reconsB', reconsB, max_outputs=8, step=step)
+                    tf.summary.image('identityA', identityA, max_outputs=8, step=step)
+                    tf.summary.image('identityB', identityB, max_outputs=8, step=step)
+                    tf.summary.image('test_input_A', test_input_A, max_outputs=8, step=step)
+                    tf.summary.image('test_input_B', test_input_B, max_outputs=8, step=step)
 
 
             if (step + 1) % save_steps_freq == 0:
