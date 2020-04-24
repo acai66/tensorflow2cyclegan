@@ -4,19 +4,25 @@
 
 ## 效果演示(只训练30000次)
 - 风景画转梵高画风格:
+
   输入风景画:
   
   ![1](results/realB_0.png)![2](results/realB_1.png)![3](results/realB_2.png)
+  
   转换后:
   
   ![1](results/fakeA_0.png)![2](results/fakeA_1.png)![3](results/fakeA_2.png)
-- 梵高画转风景画风格：
+  
+- 梵高画转风景画风格:
+
   输入梵高画:
   
   ![1](results/realA_0.png)![2](results/realA_1.png)![3](results/realA_2.png)
+  
   转换后:
   
   ![1](results/fakeB_0.png)![2](results/fakeB_1.png)![3](results/fakeB_2.png)
+  
 更多次数的训练效果应该还会更好一些。
 
 ### 移植细节
