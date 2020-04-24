@@ -1,101 +1,56 @@
-import numpy as np
-import glob
-from cv2 import imread, resize
 import tensorflow as tf
-import matplotlib.pyplot as plt
+import os.path
+from tqdm import tqdm
 
-def load_train_images(data_dir):
-    images_type_A = glob.glob(data_dir + '/trainA/*.jpg')
-    images_type_B = glob.glob(data_dir + '/trainB/*.jpg')
+cfg = {
+        'height': 256,
+        'width': 256
+    }
 
-    processed_imagesA = []
-    processed_imagesB = []
+def load_img(image_file):
+    image = tf.io.read_file(image_file)
+    image = tf.image.decode_image(image)
+    image = tf.cast(image, tf.float32)
+    return image
 
-    for i, filename in enumerate(images_type_A):
-        imA = imread(filename)
-        imB = imread(images_type_B[i])
+def normalize(image):
+    image = (image / 127.5) - 1
 
-        imA = resize(imA, (128, 128))
-        imB = resize(imA, (128, 128))
+    return image
 
-        #Randomly flip some images
-        if np.random.random() > 0.5:
-            imA = np.fliplr(imA)
-            imB = np.fliplr(imB)
-        
-        processed_imagesA.append(imA)
-        processed_imagesB.append(imB)
+def load_image_train(image_file):
+    image = load_img(image_file)
+    image = normalize(image)
+    
+    return image
 
-    #Normalise image values between -1 and 1
-    processed_imagesA = np.array(processed_imagesA)/127.5 - 1.0
-    processed_imagesB = np.array(processed_imagesB)/127.5 - 1.0
+def load_train_images(data_dir, batch_size):
+    trainA_dataset = tf.data.Dataset.list_files(os.path.join(data_dir, os.path.join('trainA', '*.jpg')))
+    trainB_dataset = tf.data.Dataset.list_files(os.path.join(data_dir, os.path.join('trainB', '*.jpg')))
+    trainA_dataset = trainA_dataset.map(load_image_train).batch(batch_size, drop_remainder=True).repeat()
+    trainB_dataset = trainB_dataset.map(load_image_train).batch(batch_size, drop_remainder=True).repeat()
 
-    return processed_imagesA, processed_imagesB
+    return iter(trainA_dataset), iter(trainB_dataset) 
 
-def load_test_images(data_dir, num_images):
-    images_type_A = glob.glob(data_dir + '/testA/*.jpg')
-    images_type_B = glob.glob(data_dir + '/testB/*.jpg')
+def load_test_images(data_dir, batch_size):
 
-    images_type_A = np.random.choice(images_type_A, num_images)
-    images_type_B = np.random.choice(images_type_B, num_images)
+    testA_dataset = tf.data.Dataset.list_files(os.path.join(data_dir, os.path.join('testA', '*.jpg')))
+    testB_dataset = tf.data.Dataset.list_files(os.path.join(data_dir, os.path.join('testB', '*.jpg')))
+    testA_dataset = testA_dataset.map(load_image_train).batch(batch_size, drop_remainder=True).repeat()
+    testB_dataset = testB_dataset.map(load_image_train).batch(batch_size, drop_remainder=True).repeat()
 
-    processed_imagesA = []
-    processed_imagesB = []
+    return iter(testA_dataset), iter(testB_dataset)
 
-    for i in range(len(images_type_A)):
-        imA = resize(imread(images_type_A[i]).astype(np.float32), (128, 128))
-        imB = resize(imread(images_type_B[i]).astype(np.float32), (128, 128))
+def save_test_results(testA, testB, fakeA, fakeB, reconsA, reconsB, identityA, identityB):
+    for i in tqdm(range(testA.shape[0])):
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'realA_%d.png' % i), testA[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'realB_%d.png' % i), testB[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'fakeA_%d.png' % i), fakeA[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'fakeB_%d.png' % i), fakeB[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'reconsA_%d.png' % i), reconsA[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'reconsB_%d.png' % i), reconsB[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'identityA_%d.png' % i), identityA[i])
+        tf.keras.preprocessing.image.save_img(os.path.join('results', 'identityB_%d.png' % i), identityB[i])
 
-        processed_imagesA.append(imA)
-        processed_imagesB.append(imB)
 
-    #Normalise image values between -1 and 1
-    processed_imagesA = np.array(processed_imagesA)/127.5 - 1.0
-    processed_imagesB = np.array(processed_imagesB)/127.5 - 1.0
 
-    return processed_imagesA, processed_imagesB
-
-#Save the training losses to the tensorboard logs that can be used for visualization
-def save_losses_tensorboard(callback, name, loss, batch_no):
-    summary = tf.summary()
-    summary_value = summary.value.add()
-    summary_value.simple_value = loss
-    summary_value.tag = name
-    callback.writer.add_summary(summary, batch_no)
-    callback.writer.flush()
-
-def save_test_results(realA, realB, fakeA, fakeB, reconsA, reconsB, identityA, identityB):
-    for i in range(len(realA)):
-        fig = plt.figure()            
-        plt.imshow(realA[i])
-        plt.axis('off')
-        plt.savefig("results/m2f/real_{}".format(i), bbox_inches='tight')
-        plt.show()
-        fig2 = plt.figure()
-        plt.imshow(fakeB[i])
-        plt.axis('off')
-        plt.savefig("results/m2f/fake_{}".format(i), bbox_inches='tight')
-        fig3 = plt.figure()
-        plt.imshow(reconsA[i])
-        plt.axis('off')
-        plt.savefig("results/m2f/recons_{}".format(i, bbox_inches='tight'))
-        fig4 = plt.figure()
-        plt.imshow(identityA[i])
-        plt.axis('off')
-        plt.savefig("results/m2f/identity_{}".format(i), bbox_inches='tight')
-        fig = plt.figure()            
-        plt.imshow(realB[i])
-        plt.axis('off')
-        plt.savefig("results/f2m/real_{}".format(i), bbox_inches='tight')
-        fig2 = plt.figure()
-        plt.imshow(fakeA[i])
-        plt.axis('off')
-        plt.savefig("results/f2m/ake_{}".format(i), bbox_inches='tight')
-        fig3 = plt.figure()
-        plt.imshow(reconsB[i])
-        plt.axis('off')
-        plt.savefig("results/f2m/recons_{}".format(i), bbox_inches='tight')
-        fig4 = plt.figure()
-        plt.imshow(identityB[i])
-        plt.axis('off')
-        plt.savefig("results/f2m/identity_{}".format(i), bbox_inches='tight')
